@@ -1,0 +1,21 @@
+FROM jenkins/jenkins:lts
+
+USER root
+
+ARG DOCKER_GID=999
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends docker.io passwd \
+    && rm -rf /var/lib/apt/lists/* \
+    && if getent group "${DOCKER_GID}" >/dev/null; then \
+         SOCKET_GROUP="$(getent group "${DOCKER_GID}" | cut -d: -f1)"; \
+       elif getent group docker >/dev/null; then \
+         groupmod -g "${DOCKER_GID}" docker; \
+         SOCKET_GROUP=docker; \
+       else \
+         groupadd -g "${DOCKER_GID}" docker; \
+         SOCKET_GROUP=docker; \
+       fi \
+    && usermod -aG "${SOCKET_GROUP}" jenkins
+
+USER jenkins
